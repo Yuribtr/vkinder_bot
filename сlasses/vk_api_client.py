@@ -450,8 +450,11 @@ class VkApiClient:
         params.update({'fields': {prepare_params(fields, self.__required_user_fields)}})
         if user_ids:
             params.update({'user_ids': prepare_params(user_ids)})
-        response = requests.get(self.API_BASE_URL + 'users.get',
-                                params={**self.__params, **params}, headers=self.__headers)
+        try:
+            response = requests.get(self.API_BASE_URL + 'users.get',
+                                    params={**self.__params, **params}, headers=self.__headers)
+        except requests.exceptions.ConnectionError:
+            response = requests.Response()
         return get_response_content(response, path='response')
 
     def get_users(self, user_ids=None, fields: [str] = None) -> list[ApiUser]:

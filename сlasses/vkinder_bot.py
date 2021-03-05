@@ -3,6 +3,7 @@ from datetime import datetime
 from random import randrange
 from time import sleep
 import requests
+import urllib3
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard
@@ -85,6 +86,7 @@ class VKinderBot:
             try:
                 retries += 1
                 log(f'Listening for messages in group {self.group_id}...(retry #{retries})', self.debug_mode)
+                self.long_poll.update_longpoll_server()
                 for event in self.long_poll.listen():
                     if event.type == VkBotEventType.MESSAGE_NEW:
                         client = self.get_client(str(event.object.message['from_id']))
@@ -222,7 +224,9 @@ class VKinderBot:
                         # if command is unexpected or not recognized
                         else:
                             self.do_inform_about_unknown_command(client)
-            except requests.exceptions.ConnectionError:
+            except (requests.exceptions.ConnectionError,
+                    requests.exceptions.ReadTimeout,
+                    urllib3.exceptions.ReadTimeoutError):
                 if retries < self.retry_attempts:
                     log(f'Error in connection. Retry in {self.retry_timeout} seconds...', self.debug_mode)
                     sleep(self.retry_timeout)
